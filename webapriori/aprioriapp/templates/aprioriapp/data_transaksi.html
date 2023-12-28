@@ -1,6 +1,55 @@
 {% extends "aprioriapp/base.html" %} {% block content %}
-
-<!-- Recent Sales Start -->
+<!-- Informasi dataset  -->
+<div class="container-fluid pt-4 px-4">
+  <div class="row g-4">
+    <div class="col-sm-6 col-xl-3">
+      <div
+        class="bg-light rounded d-flex align-items-center justify-content-between p-4"
+      >
+        <i class="fa fa-chart-line fa-3x text-primary"></i>
+        <div class="ms-3">
+          <p class="mb-2">Dataset</p>
+          <h6 class="mb-0">Warung Kopi Klotok</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div
+        class="bg-light rounded d-flex align-items-center justify-content-between p-4"
+      >
+        <i class="fa fa-chart-bar fa-3x text-primary"></i>
+        <div class="ms-3">
+          <p class="mb-2">ukuran Dataset</p>
+          <h6 class="mb-0">{{ukuran_dataset}}</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div
+        class="bg-light rounded d-flex align-items-center justify-content-between p-4"
+      >
+        <i class="fa fa-chart-area fa-3x text-primary"></i>
+        <div class="ms-3">
+          <p class="mb-2">Jumlah Transaksi</p>
+          <h6 class="mb-0">{{jumlah_transaksi}}</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div
+        class="bg-light rounded d-flex align-items-center justify-content-between p-4"
+      >
+        <i class="fa fa-chart-pie fa-3x text-primary"></i>
+        <div class="ms-3">
+          <p class="mb-2">Jumlah Item</p>
+          <h6 class="mb-0">{{jumlah_item}}</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- informasi dataset End -->
+<!-- dataset Start -->
 <div class="container-fluid pt-4 px-4">
   <div class="bg-light text-center rounded p-4">
     <div class="d-flex align-items-center justify-content-start mb-4">
@@ -16,6 +65,10 @@
             <th scope="col">Order No</th>
             <th scope="col">Item Name</th>
             <th scope="col">Order Time</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Qty</th>
+            <th scope="col">Qurrency</th>
+            <th scope="col">Price</th>
           </tr>
         </thead>
         <tbody>
@@ -25,6 +78,10 @@
             <td>{{transaksi.order_no}}</td>
             <td>{{transaksi.item_name}}</td>
             <td>{{transaksi.order_time}}</td>
+            <td>{{transaksi.ccustomer}}</td>
+            <td>{{transaksi.qty}}</td>
+            <td>{{transaksi.currency}}</td>
+            <td>{{transaksi.price}}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -55,7 +112,7 @@
     </nav>
   </div>
 </div>
-<!-- Recent Sales End -->
+<!-- Dataset End -->
 <!--content end-->
 
 {% endblock content %}

@@ -8,6 +8,8 @@ import pandas as pd
 from mlxtend.frequent_patterns import apriori, association_rules
 
 from datetime import datetime, timezone
+
+from .preprocessing import Preprocessing,ExtraPreprocessing
 #Create your views here.
 def index(request):
     transaksi = Transaksi.objects.all()
@@ -15,12 +17,8 @@ def index(request):
     transaction_list = [[transaction.order_no, transaction.item_name] for transaction in transaksi]
     #transaction_list = list(transactions)
     df = pd.DataFrame(transaction_list, columns=["order_no", "item_name"])
+    df = Preprocessing(df)
 
-    def encode(x):
-        if x <= 0 :
-            return 0
-        elif x >=1 :
-            return 1
         
     item_count = df.groupby(["order_no", "item_name"])["item_name"].count().reset_index(name = "Count")
     item_count_pivot = item_count.pivot_table(index = "order_no", columns="item_name", values='Count', aggfunc = "sum",).fillna(0)
@@ -44,6 +42,16 @@ def index(request):
 #semua data
 def all_data(request):
     transaksi = Transaksi.objects.all()
+    transaction_list = [[transaction.order_no, transaction.item_name] for transaction in transaksi]
+    df = pd.DataFrame(transaction_list, columns=["order_no", "item_name"])
+    item_count = df.groupby(["order_no", "item_name"])["item_name"].size().reset_index(name = "Count")
+    item_count_unique = item_count.drop_duplicates(subset=["order_no", "item_name"])
+    item_count_pivot = item_count_unique.pivot_table(index = "order_no", columns="item_name", values='Count', aggfunc = "count",).fillna(0)
+    ukuran_dataset = item_count_pivot.shape
+    jumlah_transaksi = item_count_pivot.shape[0]
+    jumlah_item = item_count_pivot.shape[1]
+    
+    #paginator
     paginator = Paginator(transaksi,50)
     page = request.GET.get('page')
     transaksi = paginator.get_page(page)
@@ -52,6 +60,9 @@ def all_data(request):
     context = {
         'title' : "Data Transaksi",
         'transaksis' : transaksi,
+        'ukuran_dataset': ukuran_dataset,
+        'jumlah_transaksi' : jumlah_transaksi,
+        'jumlah_item' : jumlah_item
     }
     
     return render(request, 'aprioriapp/data_transaksi.html', context)
@@ -63,11 +74,33 @@ def proses_apriori(request):
         request.session['todate'] = request.POST['todate']
         request.session['support'] = request.POST['support']
         request.session['confidence'] = request.POST['confidence']
+        if 'extraPreprocessing' in request.POST:
+             request.session['extraPreprocessing'] = request.POST['extraPreprocessing']
+        else:
+            request.session['extraPreprocessing'] = 'off'
     
     if request.session.get('fromdate'):
         fromdate = request.session.get('fromdate')
         todate = request.session.get('todate')
+        extraPreprocessing = request.session.get('extraPreprocessing')
         transactions=Transaksi.objects.filter(order_time__range=[fromdate,todate])
+        # Convert transactions to a list of lists
+        transaction_list = [[transaction.order_no, transaction.item_name] for transaction in transactions]
+        #transaction_list = list(transactions)
+        df = pd.DataFrame(transaction_list, columns=["order_no", "item_name"])
+        df = Preprocessing(df)
+
+        if(extraPreprocessing == 'on'):
+            df = ExtraPreprocessing(df)
+        
+            
+        item_count = df.groupby(["order_no", "item_name"])["item_name"].count().reset_index(name = "Count")
+        item_count_pivot = item_count.pivot_table(index = "order_no", columns="item_name", values='Count', aggfunc = "sum",).fillna(0)
+        item_count_pivot = item_count_pivot.astype("int32")
+        ukuran_dataset = item_count_pivot.shape
+        jumlah_transaksi = item_count_pivot.shape[0]
+        jumlah_item = item_count_pivot.shape[1]
+        
         
         #menampilkan 50 data awal
         paginator = Paginator(transactions,50)
@@ -76,6 +109,9 @@ def proses_apriori(request):
         context = {
             'title' : "Proses Apriori",
             'transaksis' : transactions,
+            'ukuran_dataset': ukuran_dataset,
+            'jumlah_transaksi' : jumlah_transaksi,
+            'jumlah_item' : jumlah_item
         }
         
         return render(request, 'aprioriapp/proses_apriori.html', context)
@@ -93,22 +129,32 @@ def data_hasil(request):
         todate = request.session.get('todate')
         support = request.session.get('support')
         confidence = request.session.get('confidence')
+        extraPreprocessing = request.session.get('extraPreprocessing')
         
         transactions=Transaksi.objects.filter(order_time__range=[fromdate,todate])
         # Convert transactions to a list of lists
         transaction_list = [[transaction.order_no, transaction.item_name] for transaction in transactions]
         #transaction_list = list(transactions)
         df = pd.DataFrame(transaction_list, columns=["order_no", "item_name"])
+        df = Preprocessing(df)
 
+        if(extraPreprocessing == 'on'):
+            df = ExtraPreprocessing(df)
+        
+            
+        item_count = df.groupby(["order_no", "item_name"])["item_name"].count().reset_index(name = "Count")
+        item_count_pivot = item_count.pivot_table(index = "order_no", columns="item_name", values='Count', aggfunc = "sum",).fillna(0)
+        item_count_pivot = item_count_pivot.astype("int32")
+        ukuran_dataset = item_count_pivot.shape
+        jumlah_transaksi = item_count_pivot.shape[0]
+        jumlah_item = item_count_pivot.shape[1]
         def encode(x):
             if x <= 0 :
                 return 0
             elif x >=1 :
                 return 1
-            
-        item_count = df.groupby(["order_no", "item_name"])["item_name"].count().reset_index(name = "Count")
-        item_count_pivot = item_count.pivot_table(index = "order_no", columns="item_name", values='Count', aggfunc = "sum",).fillna(0)
         item_count_pivot = item_count_pivot.applymap(encode)
+        
 
         # Apply Apriori algorithm to find frequent itemsets
         min_support = float(support)  # Adjust this threshold as needed
